@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.log
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# FastAPI / Uvicorn
+*.db
+*.sqlite3
+
+# Model files (too large for GitHub)
+*.h5
+*.hdf5
+*.ckpt
+*.pt
+*.pth
+*.joblib
+
+# Temporary uploads
+temp_uploads/
+
+# Node / React (if you later commit frontend too)
+node_modules/
+build/
+dist/
+
+# IDEs
+.vscode/
+.idea/
+*.iml
