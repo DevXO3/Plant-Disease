@@ -7,19 +7,26 @@ import re
 # Load environment variables
 load_dotenv()
 
-# Fetch keys and input data from .env
-api_key = os.getenv("GEMINI_API_KEY")
-disease = os.getenv("PLANT_DISEASE")
-symptoms = os.getenv("PLANT_BEHAVIOR")
+def get_plant_advice(symptoms: str, disease: str = "Unknown"):
+    """
+    Generates agricultural advice based on symptoms and disease name using Gemini.
+    Returns a dictionary (JSON) with the advice.
+    """
+    
+    # Fetch API key
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"error": "GEMINI_API_KEY not found in environment variables."}
 
-# Configure Gemini
-genai.configure(api_key=api_key)
+    # Configure Gemini
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.5-flash")
+    except Exception as e:
+        return {"error": f"Failed to configure Gemini: {str(e)}"}
 
-# Choose Gemini model
-model = genai.GenerativeModel("gemini-2.5-flash")
-
-# Create a structured prompt
-prompt = f"""
+    # Create a structured prompt
+    prompt = f"""
 You are an agricultural AI assistant.
 
 The detected plant disease is "{disease}".
@@ -37,38 +44,28 @@ Provide your answer strictly in **valid JSON format** with the following structu
 Avoid any text outside JSON.
 """
 
-# Generate response
-response = model.generate_content(prompt)
-raw_text = response.text.strip()
+    try:
+        # Generate response
+        response = model.generate_content(prompt)
+        raw_text = response.text.strip()
 
-# Remove markdown formatting (like ```json ... ```)
-cleaned_text = re.sub(r"^```(?:json)?|```$", "", raw_text, flags=re.MULTILINE).strip()
+        # Remove markdown formatting (like ```json ... ```)
+        cleaned_text = re.sub(r"^```(?:json)?|```$", "", raw_text, flags=re.MULTILINE).strip()
 
-# Parse JSON and access specific points
-try:
-    ai_output = json.loads(cleaned_text)
-    
-    # Access and print each point separately
-    explanation = ai_output.get("1. Explanation", "No explanation provided.")
-    preventive_actions = ai_output.get("2. Preventive Actions", [])
-    recommended_treatments = ai_output.get("3. Recommended Treatments", [])
-    environmental_advice = ai_output.get("4. Environmental and Watering Advice", [])
+        # Parse JSON
+        ai_output = json.loads(cleaned_text)
+        return ai_output
 
-    print("\n💡 1. Explanation:\n")
-    print(explanation)
+    except json.JSONDecodeError:
+        return {
+            "error": "The model did not return valid JSON.",
+            "raw_response": raw_text
+        }
+    except Exception as e:
+        return {"error": f"An error occurred during generation: {str(e)}"}
 
-    print("\n💡 2. Preventive Actions:\n")
-    for idx, action in enumerate(preventive_actions, 1):
-        print(f"{idx}. {action}")
-
-    print("\n💡 3. Recommended Treatments:\n")
-    for idx, treatment in enumerate(recommended_treatments, 1):
-        print(f"{idx}. {treatment}")
-
-    print("\n💡 4. Environmental and Watering Advice:\n")
-    for idx, advice in enumerate(environmental_advice, 1):
-        print(f"{idx}. {advice}")
-
-except json.JSONDecodeError:
-    print("\n⚠️ The model did not return valid JSON after cleaning. Raw response:\n")
-    print(response.text)
+if __name__ == "__main__":
+    # Test run
+    test_disease = "Tomato Early Blight"
+    test_symptoms = "Yellow spots on leaves"
+    print(json.dumps(get_plant_advice(test_symptoms, test_disease), indent=2))
