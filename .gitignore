@@ -25,6 +25,7 @@ Thumbs.db
 # Model files (too large for GitHub)
 *.h5
 !backend/best_model.weights.h5
+!backend/best_model.weights.h5
 *.hdf5
 *.ckpt
 *.pt
